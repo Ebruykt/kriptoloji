@@ -4,7 +4,32 @@ from crypto.vigenere import Vigenere
 from crypto.substitution import Substitution
 from crypto.affine import Affine
 
+# Yeni eklemeler: hill ve railfence wrapper'ları import edildi
+import crypto.hill as hill_mod
+import crypto.railfence as rf_mod
+
 app = Flask(__name__, static_folder="static")
+
+# Küçük wrapper sınıfları — REGISTRY ile uyumlu olacak şekilde
+class Hill:
+    name = "hill"
+    def encrypt(self, text, key=None, **kwargs):
+        if not key:
+            raise ValueError("Hill için 'key' zorunlu (4 veya 9 harf).")
+        return hill_mod.encrypt(text, key)
+    def decrypt(self, text, key=None, **kwargs):
+        if not key:
+            raise ValueError("Hill için 'key' zorunlu (4 veya 9 harf).")
+        return hill_mod.decrypt(text, key)
+
+class RailFence:
+    name = "railfence"
+    def encrypt(self, text, rails=2, **kwargs):
+        rails = int(rails) if rails is not None and str(rails) != "" else 2
+        return rf_mod.encrypt(text, rails)
+    def decrypt(self, text, rails=2, **kwargs):
+        rails = int(rails) if rails is not None and str(rails) != "" else 2
+        return rf_mod.decrypt(text, rails)
 
 # Haftalar ilerledikçe buraya yeni algoritma nesneleri eklenecek
 REGISTRY = {
@@ -12,6 +37,9 @@ REGISTRY = {
     Vigenere.name: Vigenere(),
     Substitution.name: Substitution(),
     Affine.name: Affine(),
+    # Yeni eklemeler
+    Hill.name: Hill(),
+    RailFence.name: RailFence(),
 }
 
 @app.get("/api/algorithms")

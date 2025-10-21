@@ -32,7 +32,7 @@
       background:linear-gradient(90deg,#7dd3fc,#a78bfa,#fb7185);
       -webkit-background-clip:text; background-clip:text; color:transparent;
     }
-    label{display:block; font-weight:600; margin-top:12px; color:#cbd5ff;}
+    label{Display:block; font-weight:600; margin-top:12px; color:#cbd5ff;}
     select,input,textarea{
       width:100%; margin-top:6px;
       padding:12px 12px; font-size:15px; color:#e9ecff;
@@ -93,7 +93,10 @@ const PARAMS = {
   affine: [
     {key:"a",label:"a (gcd(a,26)=1)",type:"number",value:5},
     {key:"b",label:"b",type:"number",value:8}
-  ]
+  ],
+  // Yeni eklemeler: hill ve railfence için parametre tanımları
+  hill: [{key:"key",label:"Anahtar (4 veya 9 harf)",type:"text",value:"GYBN"}],
+  railfence: [{key:"rails",label:"Ray Sayısı",type:"number",value:3}]
 };
 
 async function loadAlgos(){
