@@ -5,3 +5,10 @@ __pycache__/
 *.log
 .env
 .DS_Store
+.vscode/
+*.json
+!package.json
+!package-lock.json
+keys.json
+server_keys.json
+client_keys.json
