@@ -53,6 +53,18 @@ class CryptoServer:
         data = json.dumps(message).encode('utf-8')
         length = len(data).to_bytes(4, 'big')
         conn.sendall(length + data)
+
+    def _resolve_key(self, algorithm: str, key: str = None, encrypted_key: str = None):
+        """
+        Simetrik algoritmalar için gönderilen anahtarı çözümler.
+        - Eğer encrypted_key varsa RSA ile çözer.
+        - Yoksa düz key değerini kullanır.
+        """
+        if algorithm in ["aes", "des"]:
+            if encrypted_key:
+                return self.rsa.decrypt_bytes(encrypted_key, private_key=self.rsa_private)
+            return key
+        return None
     
     def _decrypt_message(self, algorithm: str, encrypted_data: str, **kwargs) -> str:
         """Mesajı çöz"""
@@ -108,6 +120,9 @@ class CryptoServer:
                     encrypted_data = message.get("data")
                     use_library = message.get("use_library", True)
                     key = message.get("key")
+                    encrypted_key = message.get("encrypted_key")
+
+                    resolved_key = self._resolve_key(algorithm, key, encrypted_key)
                     
                     print(f"[{addr[0]}:{addr[1]}] Algoritma: {algorithm.upper()}, Kütüphane: {'Evet' if use_library else 'Hayır (Manuel)'}")
                     
@@ -117,7 +132,7 @@ class CryptoServer:
                             algorithm, 
                             encrypted_data,
                             use_library=use_library,
-                            key=key
+                            key=resolved_key
                         )
                         
                         print(f"[{addr[0]}:{addr[1]}] Çözülmüş mesaj: {decrypted}")
@@ -128,7 +143,7 @@ class CryptoServer:
                             algorithm,
                             ack_message,
                             use_library=use_library,
-                            key=key
+                            key=resolved_key
                         )
                         
                         self._send_message(conn, {

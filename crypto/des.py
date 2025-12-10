@@ -125,15 +125,21 @@ class DES_Cipher(Cipher):
         ]
     ]
 
-    def _generate_key(self, key_input: Optional[str] = None) -> bytes:
-        """8 byte anahtar üret"""
-        if key_input:
-            key_bytes = key_input.encode('utf-8')[:8]
+    def _generate_key(self, key_input: Optional[object] = None) -> bytes:
+        """8 byte anahtar üret (str veya bytes kabul eder)"""
+        if key_input is None:
+            return os.urandom(8)
+
+        if isinstance(key_input, bytes):
+            key_bytes = key_input[:8]
             if len(key_bytes) < 8:
                 key_bytes = key_bytes.ljust(8, b'\0')
-            return key_bytes[:8]
-        else:
-            return os.urandom(8)
+            return key_bytes
+
+        key_bytes = str(key_input).encode('utf-8')[:8]
+        if len(key_bytes) < 8:
+            key_bytes = key_bytes.ljust(8, b'\0')
+        return key_bytes[:8]
 
     def _permute(self, bits: list, table: list) -> list:
         """Permütasyon uygula"""

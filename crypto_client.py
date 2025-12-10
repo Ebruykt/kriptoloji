@@ -4,6 +4,8 @@ AES, DES ve RSA algoritmalarını destekler
 """
 import socket
 import json
+import os
+import base64
 from crypto.aes import AES
 from crypto.des import DES_Cipher
 from crypto.rsa import RSA_Cipher
@@ -56,7 +58,7 @@ class CryptoClient:
         length = len(data).to_bytes(4, 'big')
         self.socket.sendall(length + data)
     
-    def _encrypt_message(self, algorithm: str, plaintext: str, use_library: bool = True, key: str = None) -> str:
+    def _encrypt_message(self, algorithm: str, plaintext: str, use_library: bool = True, key=None) -> str:
         """Mesajı şifrele"""
         if algorithm == "aes":
             return self.aes.encrypt(plaintext, use_library=use_library, key=key)
@@ -69,7 +71,7 @@ class CryptoClient:
         else:
             raise ValueError(f"Bilinmeyen algoritma: {algorithm}")
     
-    def _decrypt_response(self, algorithm: str, encrypted_data: str, use_library: bool = True, key: str = None) -> str:
+    def _decrypt_response(self, algorithm: str, encrypted_data: str, use_library: bool = True, key=None) -> str:
         """Yanıtı çöz"""
         if algorithm == "aes":
             return self.aes.decrypt(encrypted_data, use_library=use_library, key=key)
@@ -81,17 +83,32 @@ class CryptoClient:
         else:
             raise ValueError(f"Bilinmeyen algoritma: {algorithm}")
     
-    def send_encrypted_message(self, message: str, algorithm: str = "aes", use_library: bool = True, key: str = None):
+    def send_encrypted_message(self, message: str, algorithm: str = "aes", use_library: bool = True, key=None):
         """Şifreli mesaj gönder"""
         if not self.socket:
             raise Exception("Önce sunucuya bağlanın")
         
         print(f"\n[{algorithm.upper()}] Mesaj şifreleniyor...")
         print(f"Kütüphane kullanımı: {'Evet' if use_library else 'Hayır (Manuel)'}")
+
+        encrypted_key = None
+        key_for_cipher = key
+        if algorithm in ["aes", "des"]:
+            key_len = 16 if algorithm == "aes" else 8
+            if not key:
+                # Rastgele simetrik anahtar üret ve RSA ile şifreleyip gönder
+                key_bytes = os.urandom(key_len)
+                encrypted_key = self.rsa.encrypt_bytes(key_bytes, public_key=self.server_rsa_public_key)
+                key_for_cipher = key_bytes
+                printable_key = base64.b64encode(key_bytes).decode("ascii")
+                print(f"Rastgele {key_len}-byte anahtar üretildi ve RSA ile korundu.")
+                print(f"(İzleme için base64 anahtar): {printable_key}")
+            else:
+                key_for_cipher = key
         
         try:
             # Mesajı şifrele
-            encrypted = self._encrypt_message(algorithm, message, use_library, key)
+            encrypted = self._encrypt_message(algorithm, message, use_library, key_for_cipher)
             
             print(f"Şifreli mesaj (base64): {encrypted[:100]}...")
             print(f"Şifreli mesaj boyutu: {len(encrypted)} byte")
@@ -102,7 +119,8 @@ class CryptoClient:
                 "algorithm": algorithm,
                 "data": encrypted,
                 "use_library": use_library,
-                "key": key
+                "key": key if key else None,
+                "encrypted_key": encrypted_key
             })
             
             # ACK al
@@ -112,7 +130,7 @@ class CryptoClient:
                 ack_algorithm = response.get("algorithm")
                 
                 # ACK'yi çöz
-                decrypted_ack = self._decrypt_response(ack_algorithm, encrypted_ack, use_library, key)
+                decrypted_ack = self._decrypt_response(ack_algorithm, encrypted_ack, use_library, key_for_cipher)
                 print(f"\n✓ Sunucudan ACK: {decrypted_ack}")
             elif response and response.get("type") == "error":
                 print(f"\n✗ Hata: {response.get('message')}")

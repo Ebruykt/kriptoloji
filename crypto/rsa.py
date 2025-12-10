@@ -92,6 +92,33 @@ class RSA_Cipher(Cipher):
         ciphertext = cipher.encrypt(plaintext_bytes)
         return base64.b64encode(ciphertext).decode('utf-8')
 
+    def encrypt_bytes(self, data: bytes, **kw) -> str:
+        """
+        Ham byte verisini RSA ile şifrele (OAEP)
+        Simetrik anahtar gibi ikili veriler için kullanılır.
+        """
+        public_key_pem = kw.get("public_key", None)
+        key_size = int(kw.get("key_size", 2048))
+
+        if not CRYPTO_AVAILABLE:
+            raise ValueError("RSA için pycryptodome kütüphanesi gerekli")
+
+        if public_key_pem:
+            try:
+                public_key = RSA.import_key(public_key_pem)
+            except Exception:
+                raise ValueError("Geçersiz public key formatı")
+        else:
+            public_key, _ = self._generate_keypair(key_size)
+
+        cipher = PKCS1_OAEP.new(public_key)
+        max_length = (public_key.size_in_bits() // 8) - 42
+        if len(data) > max_length:
+            raise ValueError(f"Veri çok uzun. Maksimum {max_length} byte")
+
+        ciphertext = cipher.encrypt(data)
+        return base64.b64encode(ciphertext).decode('utf-8')
+
     def decrypt(self, text: str, **kw) -> str:
         """RSA ile şifrelenmiş metni çöz"""
         private_key_pem = kw.get("private_key", None)
@@ -116,6 +143,31 @@ class RSA_Cipher(Cipher):
         plaintext_bytes = cipher.decrypt(ciphertext_bytes)
         
         return plaintext_bytes.decode('utf-8')
+
+    def decrypt_bytes(self, text: str, **kw) -> bytes:
+        """
+        RSA ile şifrelenmiş base64 kodlu veriyi çöz ve ham byte döndür
+        """
+        private_key_pem = kw.get("private_key", None)
+
+        if not CRYPTO_AVAILABLE:
+            raise ValueError("RSA için pycryptodome kütüphanesi gerekli")
+
+        if not private_key_pem:
+            raise ValueError("RSA çözme için private key gerekli")
+
+        try:
+            ciphertext_bytes = base64.b64decode(text)
+        except Exception:
+            raise ValueError("Geçersiz base64 formatı")
+
+        try:
+            private_key = RSA.import_key(private_key_pem)
+        except Exception:
+            raise ValueError("Geçersiz private key formatı")
+
+        cipher = PKCS1_OAEP.new(private_key)
+        return cipher.decrypt(ciphertext_bytes)
 
     @staticmethod
     def generate_keypair(key_size: int = 2048) -> Tuple[str, str]:

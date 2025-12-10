@@ -59,17 +59,22 @@ class AES(Cipher):
     # Rcon tablosu (round constants)
     RCON = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36]
 
-    def _generate_key(self, key_input: Optional[str] = None) -> bytes:
-        """16 byte anahtar üret"""
-        if key_input:
-            # Kullanıcı anahtarından 16 byte üret
-            key_bytes = key_input.encode('utf-8')[:16]
+    def _generate_key(self, key_input: Optional[object] = None) -> bytes:
+        """16 byte anahtar üret (str veya bytes kabul eder)"""
+        if key_input is None:
+            return os.urandom(16)
+
+        if isinstance(key_input, bytes):
+            key_bytes = key_input[:16]
             if len(key_bytes) < 16:
                 key_bytes = key_bytes.ljust(16, b'\0')
-            return key_bytes[:16]
-        else:
-            # Rastgele 16 byte anahtar
-            return os.urandom(16)
+            return key_bytes
+
+        # Kullanıcı anahtarından 16 byte üret (string)
+        key_bytes = str(key_input).encode('utf-8')[:16]
+        if len(key_bytes) < 16:
+            key_bytes = key_bytes.ljust(16, b'\0')
+        return key_bytes[:16]
 
     def _key_expansion(self, key: bytes) -> list:
         """AES key expansion (128-bit için 10 round)"""
