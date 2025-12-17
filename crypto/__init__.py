@@ -8,3 +8,7 @@ from .des import *
 from .rsa import *
 from .hill import encrypt as hill_encrypt, decrypt as hill_decrypt
 from .railfence import encrypt as rail_encrypt, decrypt as rail_decrypt
+from .route import RouteCipher
+from .columnar import ColumnarCipher
+from .pigpen import PigpenCipher
+from .polybius import PolybiusCipher

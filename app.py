@@ -7,6 +7,10 @@ from crypto.playfair import Playfair
 from crypto.aes import AES
 from crypto.des import DES_Cipher
 from crypto.rsa import RSA_Cipher
+from crypto.route import RouteCipher
+from crypto.columnar import ColumnarCipher
+from crypto.pigpen import PigpenCipher
+from crypto.polybius import PolybiusCipher
 
 # Yeni eklemeler: hill ve railfence wrapper'ları import edildi
 import crypto.hill as hill_mod
@@ -49,6 +53,11 @@ REGISTRY = {
     # Yeni eklemeler
     Hill.name: Hill(),
     RailFence.name: RailFence(),
+    # Yeni transpozisyon ve görsel şifreler
+    RouteCipher.name: RouteCipher(),
+    ColumnarCipher.name: ColumnarCipher(),
+    PigpenCipher.name: PigpenCipher(),
+    PolybiusCipher.name: PolybiusCipher(),
 }
 
 @app.get("/api/algorithms")

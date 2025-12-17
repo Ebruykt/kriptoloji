@@ -1,6 +1,6 @@
 """
 Şifreli İstemci-Sunucu Haberleşme Sistemi - Sunucu
-AES, DES ve RSA algoritmalarını destekler
+AES, DES, RSA ve klasik şifreleme algoritmalarını destekler
 """
 import socket
 import json
@@ -9,6 +9,10 @@ from crypto.aes import AES
 from crypto.des import DES_Cipher
 from crypto.rsa import RSA_Cipher
 from crypto.key_manager import KeyManager
+from crypto.route import RouteCipher
+from crypto.columnar import ColumnarCipher
+from crypto.pigpen import PigpenCipher
+from crypto.polybius import PolybiusCipher
 
 HOST = "127.0.0.1"
 PORT = 12346
@@ -18,6 +22,10 @@ class CryptoServer:
         self.aes = AES()
         self.des = DES_Cipher()
         self.rsa = RSA_Cipher()
+        self.route = RouteCipher()
+        self.columnar = ColumnarCipher()
+        self.pigpen = PigpenCipher()
+        self.polybius = PolybiusCipher()
         self.key_manager = KeyManager("server_keys.json")
         
         # RSA anahtar çifti oluştur (anahtar dağıtımı için)
@@ -78,6 +86,14 @@ class CryptoServer:
             return self.des.decrypt(encrypted_data, use_library=use_library, key=key)
         elif algorithm == "rsa":
             return self.rsa.decrypt(encrypted_data, private_key=self.rsa_private)
+        elif algorithm == "route":
+            return self.route.decrypt(encrypted_data, **kwargs)
+        elif algorithm == "columnar":
+            return self.columnar.decrypt(encrypted_data, **kwargs)
+        elif algorithm == "pigpen":
+            return self.pigpen.decrypt(encrypted_data, **kwargs)
+        elif algorithm == "polybius":
+            return self.polybius.decrypt(encrypted_data, **kwargs)
         else:
             raise ValueError(f"Bilinmeyen algoritma: {algorithm}")
     
@@ -93,6 +109,14 @@ class CryptoServer:
             return self.des.encrypt(plaintext, use_library=use_library, key=key)
         elif algorithm == "rsa":
             return self.rsa.encrypt(plaintext, public_key=self.rsa_public)
+        elif algorithm == "route":
+            return self.route.encrypt(plaintext, **kwargs)
+        elif algorithm == "columnar":
+            return self.columnar.encrypt(plaintext, **kwargs)
+        elif algorithm == "pigpen":
+            return self.pigpen.encrypt(plaintext, **kwargs)
+        elif algorithm == "polybius":
+            return self.polybius.encrypt(plaintext, **kwargs)
         else:
             raise ValueError(f"Bilinmeyen algoritma: {algorithm}")
     

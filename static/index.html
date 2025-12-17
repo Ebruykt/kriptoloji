@@ -2,186 +2,726 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <title>Klasik Şifrelemeler</title>
+  <title>Kriptografi Laboratuvarı - Şifreleme Araçları</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    *{box-sizing:border-box;}
-    body{
-      margin:0; padding:0;
-      font-family:Segoe UI, Roboto, Arial, sans-serif;
-      color:#1f2937;
-      background:linear-gradient(to right, #FFB6C1, #E0BBE4, #ADD8E6);
-      min-height:100vh;
-      display:flex; justify-content:center; align-items:flex-start;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    .container{
-      width:92%; max-width:760px;
-      margin:40px 0;
-      background:linear-gradient(180deg,#ffffff,#f8fafc);
-      border:1px solid rgba(59, 130, 246, 0.2);
-      border-radius:16px;
-      padding:24px 22px 28px;
-      box-shadow:0 12px 30px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(236, 72, 153, 0.08);
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: 
+        linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%),
+        url('/static/images/alan-turing-2-620x350.jpg') center/cover fixed no-repeat,
+        #667eea;
+      min-height: 100vh;
+      padding: 20px;
+      color: #1e293b;
+      position: relative;
     }
-    h1{
-      text-align:center; margin:4px 0 18px;
-      font-weight:800; letter-spacing:.2px;
-      background:linear-gradient(90deg,#FFB6C1,#E0BBE4,#ADD8E6);
-      -webkit-background-clip:text; background-clip:text; color:transparent;
+    
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('/static/images/alan-turing-2-620x350.jpg') center/cover fixed no-repeat;
+      opacity: 0.25;
+      z-index: 0;
+      pointer-events: none;
+      filter: grayscale(40%) brightness(1.1);
+      mix-blend-mode: overlay;
     }
-    label{Display:block; font-weight:600; margin-top:12px; color:#475569;}
-    select,input,textarea{
-      width:100%; margin-top:6px;
-      padding:12px 12px; font-size:15px; color:#1f2937;
-      background:#ffffff;
-      border:1px solid #cbd5e1; border-radius:12px;
-      outline:none; transition:.18s ease;
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+      animation: fadeInDown 0.6s ease-out;
+      position: relative;
+      z-index: 1;
     }
-    select:focus,input:focus,textarea:focus{
-      border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59, 130, 246, 0.2);
-      background:#ffffff;
+    
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.2);
     }
-    textarea{resize:vertical;}
-    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
-    @media(max-width:640px){.row{grid-template-columns:1fr;}}
-
-    .btn{
-      width:100%; padding:12px; border:none; border-radius:12px;
-      font-size:16px; font-weight:700; cursor:pointer; color:#ffffff;
-      transition:transform .06s ease, filter .15s ease;
+    
+    .header p {
+      font-size: 1rem;
+      opacity: 0.9;
+      font-weight: 300;
     }
-    .btn:active{transform:translateY(1px)}
-    .encrypt{background:linear-gradient(135deg,#3b82f6,#8b5cf6);}
-    .decrypt{background:linear-gradient(135deg,#ec4899,#f472b6);}
-    .encrypt:hover,.decrypt:hover{filter:brightness(1.1);}
-
-    pre{
-      background:#f8fafc; border:1px dashed #cbd5e1;
-      border-radius:12px; padding:12px; min-height:68px; white-space:pre-wrap;
-      color:#1f2937;
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+      animation: fadeInUp 0.6s ease-out;
+      position: relative;
+      z-index: 1;
     }
-    h3{
-      color:#334155;
-      margin:18px 4px 8px;
+    
+    .main-content {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      min-height: 600px;
     }
-    .heart{
-      position:fixed;
-      font-size:20px;
-      color:#FFB6C1;
-      pointer-events:none;
-      z-index:9999;
-      animation:floatUp 3s ease-out forwards;
+    
+    .sidebar {
+      background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+      padding: 30px;
+      border-right: 1px solid #cbd5e1;
     }
-    @keyframes floatUp{
-      0%{
-        opacity:1;
-        transform:translateY(0) scale(1);
+    
+    .content-area {
+      padding: 30px;
+    }
+    
+    .section-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .section-title i {
+      font-size: 1rem;
+    }
+    
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #475569;
+      font-size: 0.875rem;
+    }
+    
+    select, input, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 15px;
+      color: #1e293b;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    
+    select:focus, input:focus, textarea:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+    }
+    
+    /* Native select'i kapatacağız */
+    #method {
+      display: none;
+    }
+    
+    /* Custom dropdown */
+    .custom-select {
+      position: relative;
+      width: 100%;
+    }
+    
+    .custom-select__btn {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 15px;
+      color: #1e293b;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+    
+    .custom-select__btn:focus,
+    .custom-select__btn:hover {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .custom-select__list {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 8px);
+      max-height: 320px;
+      overflow: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.4);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+      z-index: 9999;
+      
+      /* 🔥 Görsel artık çok daha belirgin */
+      background:
+        linear-gradient(
+          135deg,
+          rgba(255,255,255,0.72),
+          rgba(255,255,255,0.65)
+        ),
+        url('/static/images/şifre.png') center/cover no-repeat;
+      
+      backdrop-filter: blur(1px);
+      padding: 10px;
+      display: none;
+    }
+    
+    .custom-select.open .custom-select__list {
+      display: block;
+    }
+    
+    .custom-select__item {
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #0f172a;
+      background: rgba(255,255,255,0.75);
+      border: 1px solid rgba(226,232,240,0.9);
+      margin-bottom: 8px;
+      transition: transform 0.08s ease, background 0.2s ease;
+    }
+    
+    .custom-select__item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .custom-select__item:hover {
+      background: rgba(255,255,255,0.92);
+      transform: translateY(-1px);
+    }
+    
+    .custom-select__item.active {
+      background: rgba(102,126,234,0.15);
+      border-color: rgba(102,126,234,0.35);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      line-height: 1.5;
+    }
+    
+    .params-grid {
+      display: grid;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    
+    .param-group {
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    
+    .btn {
+      padding: 14px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      color: white;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn-encrypt {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .btn-decrypt {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .output-section {
+      margin-top: 24px;
+    }
+    
+    .output-box {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 20px;
+      min-height: 120px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1e293b;
+      white-space: pre-wrap;
+      word-break: break-all;
+      position: relative;
+    }
+    
+    .output-box.success {
+      border-color: #10b981;
+      background: #f0fdf4;
+    }
+    
+    .output-box.error {
+      border-color: #ef4444;
+      background: #fef2f2;
+      color: #dc2626;
+    }
+    
+    .copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 8px 12px;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #64748b;
+      transition: all 0.2s ease;
+    }
+    
+    .copy-btn:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+    
+    .algorithm-info {
+      background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+      padding: 16px;
+      border-radius: 10px;
+      margin-top: 20px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .algorithm-info h4 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 8px;
+    }
+    
+    .algorithm-info p {
+      font-size: 0.8rem;
+      color: #64748b;
+      line-height: 1.5;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #667eea;
+      color: white;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
       }
-      100%{
-        opacity:0;
-        transform:translateY(-200px) scale(1.5);
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
+    }
+    
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @media (max-width: 968px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid #cbd5e1;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+    }
+    
+    @media (max-width: 640px) {
+      .actions {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
+  <div class="header">
+    <h1><i class="fas fa-shield-alt"></i> Kriptografi Laboratuvarı</h1>
+    <p>Klasik ve Modern Şifreleme Algoritmaları</p>
+  </div>
+
   <div class="container">
-    <h1>Klasik Şifrelemeler</h1>
+    <div class="main-content">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="section-title">
+          <i class="fas fa-cog"></i>
+          Algoritma Seçimi
+        </div>
+        
+        <label for="method">Şifreleme Yöntemi</label>
+        <select id="method"></select>
 
-    <label for="method">Algoritma Seçin</label>
-    <select id="method"></select>
+        <div id="algorithm-info" class="algorithm-info" style="display:none;">
+          <h4><i class="fas fa-info-circle"></i> Algoritma Bilgisi</h4>
+          <p id="algo-description"></p>
+          <div id="algo-badges" style="margin-top:8px;"></div>
+        </div>
 
-    <div id="params" class="row"></div>
+        <div id="params" class="params-grid"></div>
+      </div>
 
-    <label for="text">Metin</label>
-    <textarea id="text" rows="5" placeholder="Şifrelenecek veya çözülecek metni yazın..."></textarea>
+      <!-- Content Area -->
+      <div class="content-area">
+        <div class="section-title">
+          <i class="fas fa-keyboard"></i>
+          Metin Girişi
+        </div>
+        
+        <textarea id="text" placeholder="Şifrelenecek veya çözülecek metninizi buraya yazın..."></textarea>
 
-    <div class="row" style="margin-top:14px;">
-      <button class="btn encrypt" onclick="callApi('encrypt')">🔒 Şifrele</button>
-      <button class="btn decrypt" onclick="callApi('decrypt')">🔓 Çöz</button>
+        <div class="actions">
+          <button class="btn btn-encrypt" onclick="callApi('encrypt')">
+            <i class="fas fa-lock"></i>
+            <span>Şifrele</span>
+          </button>
+          <button class="btn btn-decrypt" onclick="callApi('decrypt')">
+            <i class="fas fa-unlock"></i>
+            <span>Şifre Çöz</span>
+          </button>
+        </div>
+
+        <div class="output-section">
+          <div class="section-title">
+            <i class="fas fa-lock"></i>
+            <i class="fas fa-unlock"></i>
+            Sonuç
+          </div>
+          <div class="output-box" id="out">
+            <button class="copy-btn" onclick="copyToClipboard()" style="display:none;" id="copyBtn">
+              <i class="fas fa-copy"></i> Kopyala
+            </button>
+            <span style="color:#94a3b8;">Sonuç burada görünecek...</span>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <h3 style="margin:18px 4px 8px;">Sonuç</h3>
-    <pre id="out"></pre>
   </div>
 
 <script>
 const PARAMS = {
-  caesar: [{key:"k",label:"Kaydırma (k)",type:"number",value:3}],
-  vigenere: [{key:"key",label:"Anahtar",type:"text",value:"key"}],
-  substitution: [{key:"mapping",label:"26 Harf Harita",type:"text",value:"qwertyuiopasdfghjklzxcvbnm"}],
+  caesar: [{key:"k",label:"Kaydırma Miktarı",type:"number",value:3}],
+  vigenere: [{key:"key",label:"Anahtar Kelime",type:"text",value:"KEY"}],
+  substitution: [{key:"mapping",label:"26 Harfli Alfabe Haritası",type:"text",value:"qwertyuiopasdfghjklzxcvbnm"}],
   affine: [
-    {key:"a",label:"a (gcd(a,26)=1)",type:"number",value:5},
-    {key:"b",label:"b",type:"number",value:8}
+    {key:"a",label:"Çarpan (a) - gcd(a,26)=1",type:"number",value:5},
+    {key:"b",label:"Kaydırma (b)",type:"number",value:8}
   ],
-  // Yeni eklemeler: hill ve railfence için parametre tanımları
-  hill: [{key:"key",label:"Anahtar (4 veya 9 harf)",type:"text",value:"GYBN"}],
-  railfence: [{key:"rails",label:"Ray Sayısı",type:"number",value:3}]
+  hill: [{key:"key",label:"Matris Anahtarı (4 veya 9 harf)",type:"text",value:"GYBN"}],
+  railfence: [{key:"rails",label:"Ray Sayısı",type:"number",value:3}],
+  route: [
+    {key:"rows",label:"Satır Sayısı",type:"number",value:3},
+    {key:"route",label:"Rota Tipi",type:"select",value:"spiral_clockwise",options:[
+      {value:"spiral_clockwise",label:"Saat Yönü Spiral"},
+      {value:"spiral_counterclockwise",label:"Saat Yönü Tersi Spiral"},
+      {value:"zigzag",label:"Zigzag (Yılan)"},
+      {value:"diagonal",label:"Çapraz"}
+    ]}
+  ],
+  columnar: [{key:"key",label:"Anahtar Kelime",type:"text",value:"CRYPTO"}],
+  pigpen: [{key:"use_numeric",label:"Gösterim Tipi",type:"select",value:"true",options:[
+    {value:"true",label:"Sayısal Gösterim"},
+    {value:"false",label:"Sembol Gösterimi"}
+  ]}],
+  polybius: [{key:"use_numbers",label:"Koordinat Tipi",type:"select",value:"true",options:[
+    {value:"true",label:"Sayısal (11, 12...)"},
+    {value:"false",label:"Harfli (AA, AB...)"}
+  ]}]
 };
 
-function createHeart(x, y){
-  const heart = document.createElement('div');
-  heart.className = 'heart';
-  heart.textContent = '💖';
-  heart.style.left = x + 'px';
-  heart.style.top = y + 'px';
-  document.body.appendChild(heart);
-  setTimeout(() => heart.remove(), 3000);
+const ALGO_INFO = {
+  caesar: {desc:"Alfabedeki her harfi sabit bir değer kadar kaydırarak şifreler.",badges:["Klasik","Substitüsyon"]},
+  vigenere: {desc:"Anahtar kelime kullanarak polialfabetik şifreleme yapar.",badges:["Klasik","Polialfabetik"]},
+  substitution: {desc:"Her harfi farklı bir harfle değiştirerek şifreler.",badges:["Klasik","Monoalfabetik"]},
+  affine: {desc:"Matematiksel dönüşüm (ax+b mod 26) kullanır.",badges:["Klasik","Matematiksel"]},
+  hill: {desc:"Matris çarpımı ile blok şifreleme yapar.",badges:["Klasik","Matris"]},
+  railfence: {desc:"Metni zigzag şeklinde yazıp satır satır okur.",badges:["Klasik","Transpozisyon"]},
+  route: {desc:"Metni matrise yerleştirir ve farklı rotalarla okur.",badges:["Transpozisyon","Geometrik"]},
+  columnar: {desc:"Sütunları anahtar kelimeye göre yeniden düzenler.",badges:["Transpozisyon","Anahtar Tabanlı"]},
+  pigpen: {desc:"Harfleri özel semboller veya sayılarla temsil eder.",badges:["Görsel","Freemason"]},
+  polybius: {desc:"Harfleri 5x5 ızgarada koordinatlarla gösterir.",badges:["Koordinat","Antik"]},
+  aes: {desc:"Gelişmiş Şifreleme Standardı - Modern simetrik şifreleme.",badges:["Modern","Simetrik","Güçlü"]},
+  des: {desc:"Veri Şifreleme Standardı - Eski simetrik şifreleme.",badges:["Modern","Simetrik"]},
+  rsa: {desc:"Açık anahtarlı asimetrik şifreleme algoritması.",badges:["Modern","Asimetrik","Açık Anahtar"]},
+  playfair: {desc:"5x5 matris kullanarak ikili harf gruplarını şifreler.",badges:["Klasik","Digraf"]}
+};
+
+function copyToClipboard(){
+  const output = document.getElementById('out').textContent;
+  navigator.clipboard.writeText(output).then(() => {
+    const btn = document.getElementById('copyBtn');
+    const oldText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i> Kopyalandı!';
+    setTimeout(() => btn.innerHTML = oldText, 2000);
+  });
+}
+
+function buildCustomSelect(nativeSelect){
+  // wrapper
+  const wrap = document.createElement('div');
+  wrap.className = 'custom-select';
+
+  // button
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'custom-select__btn';
+
+  const caret = document.createElement('i');
+  caret.className = 'fas fa-chevron-down';
+  caret.style.opacity = '0.7';
+
+  const label = document.createElement('span');
+  label.textContent = nativeSelect.options[nativeSelect.selectedIndex]?.text || 'Seçiniz';
+
+  btn.appendChild(label);
+  btn.appendChild(caret);
+
+  // list
+  const list = document.createElement('div');
+  list.className = 'custom-select__list';
+
+  function refreshActive(){
+    [...list.children].forEach(el => el.classList.remove('active'));
+    const v = nativeSelect.value;
+    const active = list.querySelector(`[data-value="${v}"]`);
+    if(active) active.classList.add('active');
+    label.textContent = nativeSelect.options[nativeSelect.selectedIndex]?.text || v;
+  }
+
+  // items
+  [...nativeSelect.options].forEach(opt => {
+    const item = document.createElement('div');
+    item.className = 'custom-select__item';
+    item.textContent = opt.text;
+    item.dataset.value = opt.value;
+
+    item.addEventListener('click', () => {
+      nativeSelect.value = opt.value;
+      nativeSelect.dispatchEvent(new Event('change')); // renderParams çalışsın
+      wrap.classList.remove('open');
+      refreshActive();
+    });
+
+    list.appendChild(item);
+  });
+
+  wrap.appendChild(btn);
+  wrap.appendChild(list);
+
+  // native select'in yerine koy
+  nativeSelect.parentNode.insertBefore(wrap, nativeSelect.nextSibling);
+
+  // events
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    wrap.classList.toggle('open');
+  });
+
+  document.addEventListener('click', (e) => {
+    if(!wrap.contains(e.target)) wrap.classList.remove('open');
+  });
+
+  nativeSelect.addEventListener('change', refreshActive);
+  refreshActive();
 }
 
 async function loadAlgos(){
   const res = await fetch('/api/algorithms');
   const algos = await res.json();
   const sel = document.getElementById('method');
-  sel.innerHTML = algos.map(a=>`<option>${a}</option>`).join('');
+  sel.innerHTML = algos.map(a=>`<option value="${a}">${a.toUpperCase()}</option>`).join('');
   sel.onchange = renderParams;
   renderParams();
   
-  const textarea = document.getElementById('text');
-  textarea.addEventListener('input', function(e){
-    const text = e.target.value.toLowerCase();
-    if(text.includes('hayrusss')){
-      const rect = textarea.getBoundingClientRect();
-      for(let i = 0; i < 10; i++){
-        setTimeout(() => {
-          const x = rect.left + Math.random() * rect.width;
-          const y = rect.top + Math.random() * rect.height;
-          createHeart(x, y);
-        }, i * 100);
-      }
-    }
-  });
+  buildCustomSelect(sel); // ✅ Custom dropdown oluştur
 }
+
 function renderParams(){
   const m = document.getElementById('method').value;
   const box = document.getElementById('params');
   const defs = PARAMS[m]||[];
-  box.innerHTML = defs.map(p=>`
-    <div>
-      <label>${p.label}</label>
-      <input id="p-${p.key}" type="${p.type}" value="${p.value??''}">
-    </div>`).join('');
+  
+  // Algoritma bilgisini göster
+  const info = ALGO_INFO[m];
+  if(info){
+    document.getElementById('algorithm-info').style.display = 'block';
+    document.getElementById('algo-description').textContent = info.desc;
+    document.getElementById('algo-badges').innerHTML = info.badges.map(b=>
+      `<span class="badge">${b}</span>`
+    ).join('');
+  } else {
+    document.getElementById('algorithm-info').style.display = 'none';
+  }
+  
+  box.innerHTML = defs.map(p=>{
+    if(p.type === 'select'){
+      return `
+        <div class="param-group">
+          <label><i class="fas fa-sliders-h"></i> ${p.label}</label>
+          <select id="p-${p.key}">
+            ${p.options.map(opt=>
+              `<option value="${opt.value}" ${opt.value===p.value?'selected':''}>${opt.label}</option>`
+            ).join('')}
+          </select>
+        </div>`;
+    }
+    return `
+      <div class="param-group">
+        <label><i class="fas fa-key"></i> ${p.label}</label>
+        <input id="p-${p.key}" type="${p.type}" value="${p.value??''}" />
+      </div>`;
+  }).join('');
 }
+
 async function callApi(kind){
   const method = document.getElementById('method').value;
   const text = document.getElementById('text').value;
+  const outputBox = document.getElementById('out');
+  const copyBtn = document.getElementById('copyBtn');
   
-  // Özel kontrol: melisa yazıldığında özel mesaj göster
-  if(text.toLowerCase().includes('melisa')){
-    document.getElementById('out').textContent = 'melisa 💖 rüştü';
+  if(!text.trim()){
+    outputBox.className = 'output-box error';
+    outputBox.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Lütfen bir metin girin!';
+    copyBtn.style.display = 'none';
     return;
   }
   
+  // Loading state
+  const btnText = kind === 'encrypt' ? 'Şifreleniyor...' : 'Çözülüyor...';
+  outputBox.className = 'output-box';
+  outputBox.innerHTML = `<div class="loading"></div> ${btnText}`;
+  copyBtn.style.display = 'none';
+  
   const defs = PARAMS[method]||[];
   const options = {};
-  defs.forEach(p => options[p.key] = document.getElementById('p-'+p.key)?.value);
-  const res = await fetch('/api/'+kind, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({method, text, options})
+  defs.forEach(p => {
+    const val = document.getElementById('p-'+p.key)?.value;
+    // Boolean dönüşümü
+    if(val === 'true') options[p.key] = true;
+    else if(val === 'false') options[p.key] = false;
+    else options[p.key] = val;
   });
-  const js = await res.json();
-  document.getElementById('out').textContent = js.result || ("Hata: " + js.error);
+  
+  try {
+    const res = await fetch('/api/'+kind, {
+      method:'POST', 
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({method, text, options})
+    });
+    const js = await res.json();
+    
+    if(js.result){
+      outputBox.className = 'output-box success';
+      outputBox.textContent = js.result;
+      copyBtn.style.display = 'block';
+    } else {
+      outputBox.className = 'output-box error';
+      outputBox.innerHTML = `<i class="fas fa-times-circle"></i> ${js.error || 'Bir hata oluştu'}`;
+      copyBtn.style.display = 'none';
+    }
+  } catch(err){
+    outputBox.className = 'output-box error';
+    outputBox.innerHTML = `<i class="fas fa-exclamation-circle"></i> Bağlantı hatası: ${err.message}`;
+    copyBtn.style.display = 'none';
+  }
 }
+
 loadAlgos();
 </script>
 </body>
