@@ -6,19 +6,19 @@ import socket
 import json
 import os
 import base64
-from crypto.aes import AES
-from crypto.des import DES_Cipher
-from crypto.rsa import RSA_Cipher
 from crypto.key_manager import KeyManager
+from crypto.symmetric_wrapper import AESCipher, DESCipher
+import crypto.rsa as rsa_lib
+
 
 HOST = "127.0.0.1"
 PORT = 12346
 
 class CryptoClient:
     def __init__(self):
-        self.aes = AES()
-        self.des = DES_Cipher()
-        self.rsa = RSA_Cipher()
+        self.aes = AESCipher()
+        self.des = DESCipher()
+        self.rsa = rsa_lib
         self.key_manager = KeyManager("client_keys.json")
         self.server_rsa_public_key = None
         self.socket = None
@@ -59,29 +59,25 @@ class CryptoClient:
         self.socket.sendall(length + data)
     
     def _encrypt_message(self, algorithm: str, plaintext: str, use_library: bool = True, key=None) -> str:
-        """Mesajı şifrele"""
         if algorithm == "aes":
-            return self.aes.encrypt(plaintext, use_library=use_library, key=key)
+         return self.aes.encrypt(plaintext, key, use_library)
         elif algorithm == "des":
-            return self.des.encrypt(plaintext, use_library=use_library, key=key)
+         return self.des.encrypt(plaintext, key)
         elif algorithm == "rsa":
-            if not self.server_rsa_public_key:
-                raise ValueError("RSA public key bulunamadı")
-            return self.rsa.encrypt(plaintext, public_key=self.server_rsa_public_key)
+         raise ValueError("RSA mesaj şifreleme için kullanılmaz")
         else:
-            raise ValueError(f"Bilinmeyen algoritma: {algorithm}")
+          raise ValueError(f"Bilinmeyen algoritma: {algorithm}")
     
     def _decrypt_response(self, algorithm: str, encrypted_data: str, use_library: bool = True, key=None) -> str:
-        """Yanıtı çöz"""
         if algorithm == "aes":
-            return self.aes.decrypt(encrypted_data, use_library=use_library, key=key)
+           return self.aes.decrypt(encrypted_data, key, use_library)
         elif algorithm == "des":
-            return self.des.decrypt(encrypted_data, use_library=use_library, key=key)
+           return self.des.decrypt(encrypted_data, key)
         elif algorithm == "rsa":
-            # RSA için private key gerekli (bu örnekte kullanılmıyor)
-            raise ValueError("RSA çözme için private key gerekli")
+           raise ValueError("RSA çözme için private key gerekli")
         else:
-            raise ValueError(f"Bilinmeyen algoritma: {algorithm}")
+           raise ValueError(f"Bilinmeyen algoritma: {algorithm}")
+
     
     def send_encrypted_message(self, message: str, algorithm: str = "aes", use_library: bool = True, key=None):
         """Şifreli mesaj gönder"""
@@ -98,7 +94,7 @@ class CryptoClient:
             if not key:
                 # Rastgele simetrik anahtar üret ve RSA ile şifreleyip gönder
                 key_bytes = os.urandom(key_len)
-                encrypted_key = self.rsa.encrypt_bytes(key_bytes, public_key=self.server_rsa_public_key)
+                encrypted_key = rsa_lib.encrypt_key(key_bytes, self.server_rsa_public_key)
                 key_for_cipher = key_bytes
                 printable_key = base64.b64encode(key_bytes).decode("ascii")
                 print(f"Rastgele {key_len}-byte anahtar üretildi ve RSA ile korundu.")
@@ -188,7 +184,7 @@ def main():
             if algorithm in ["aes", "des"]:
                 key_input = input("Anahtar (boş bırakırsanız rastgele üretilir): ").strip()
                 if key_input:
-                    key = key_input
+                    key = key_input.encode("utf-8")
             
             message = input("Mesaj: ").strip()
             

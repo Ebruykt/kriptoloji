@@ -5,9 +5,8 @@ AES, DES, RSA ve klasik şifreleme algoritmalarını destekler
 import socket
 import json
 import base64
-from crypto.aes import AES
-from crypto.des import DES_Cipher
-from crypto.rsa import RSA_Cipher
+from crypto.symmetric_wrapper import AESCipher, DESCipher
+import crypto.rsa as rsa_lib
 from crypto.key_manager import KeyManager
 from crypto.route import RouteCipher
 from crypto.columnar import ColumnarCipher
@@ -19,9 +18,8 @@ PORT = 12346
 
 class CryptoServer:
     def __init__(self):
-        self.aes = AES()
-        self.des = DES_Cipher()
-        self.rsa = RSA_Cipher()
+        self.aes = AESCipher()
+        self.des = DESCipher()
         self.route = RouteCipher()
         self.columnar = ColumnarCipher()
         self.pigpen = PigpenCipher()
@@ -30,11 +28,13 @@ class CryptoServer:
         
         # RSA anahtar çifti oluştur (anahtar dağıtımı için)
         try:
-            self.rsa_public, self.rsa_private = self.key_manager.get_rsa_public_key(), self.key_manager.get_rsa_private_key()
-            if not self.rsa_public:
-                self.rsa_public, self.rsa_private = self.key_manager.generate_rsa_keypair()
+             self.rsa_public = self.key_manager.get_rsa_public_key()
+             self.rsa_private = self.key_manager.get_rsa_private_key()
+             if not self.rsa_public or not self.rsa_private:
+              raise Exception
         except:
             self.rsa_public, self.rsa_private = self.key_manager.generate_rsa_keypair()
+
         
         print(f"RSA Public Key hazır (anahtar dağıtımı için)")
     
@@ -70,7 +70,7 @@ class CryptoServer:
         """
         if algorithm in ["aes", "des"]:
             if encrypted_key:
-                return self.rsa.decrypt_bytes(encrypted_key, private_key=self.rsa_private)
+                return rsa_lib.decrypt_key(encrypted_key, self.rsa_private)
             return key
         return None
     
@@ -79,13 +79,13 @@ class CryptoServer:
         if algorithm == "aes":
             use_library = kwargs.get("use_library", True)
             key = kwargs.get("key")
-            return self.aes.decrypt(encrypted_data, use_library=use_library, key=key)
+            return self.aes.decrypt(encrypted_data, key=key, use_library=use_library)
         elif algorithm == "des":
             use_library = kwargs.get("use_library", True)
             key = kwargs.get("key")
-            return self.des.decrypt(encrypted_data, use_library=use_library, key=key)
+            return self.des.decrypt(encrypted_data, key=key)
         elif algorithm == "rsa":
-            return self.rsa.decrypt(encrypted_data, private_key=self.rsa_private)
+            raise ValueError("RSA mesaj çözme için kullanılmaz")
         elif algorithm == "route":
             return self.route.decrypt(encrypted_data, **kwargs)
         elif algorithm == "columnar":
@@ -102,13 +102,13 @@ class CryptoServer:
         if algorithm == "aes":
             use_library = kwargs.get("use_library", True)
             key = kwargs.get("key")
-            return self.aes.encrypt(plaintext, use_library=use_library, key=key)
+            return self.aes.encrypt(plaintext, key=key, use_library=use_library)
         elif algorithm == "des":
             use_library = kwargs.get("use_library", True)
             key = kwargs.get("key")
-            return self.des.encrypt(plaintext, use_library=use_library, key=key)
+            return self.des.encrypt(plaintext, key=key)
         elif algorithm == "rsa":
-            return self.rsa.encrypt(plaintext, public_key=self.rsa_public)
+            raise ValueError("RSA mesaj şifreleme için kullanılmaz")
         elif algorithm == "route":
             return self.route.encrypt(plaintext, **kwargs)
         elif algorithm == "columnar":

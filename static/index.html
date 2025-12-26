@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <title>Kriptografi Laboratuvarı - Şifreleme Araçları</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     * {
@@ -16,27 +17,11 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: 
         linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%),
-        url('/static/images/alan-turing-2-620x350.jpg') center/cover fixed no-repeat,
         #667eea;
       min-height: 100vh;
       padding: 20px;
       color: #1e293b;
       position: relative;
-    }
-    
-    body::after {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: url('/static/images/alan-turing-2-620x350.jpg') center/cover fixed no-repeat;
-      opacity: 0.25;
-      z-index: 0;
-      pointer-events: none;
-      filter: grayscale(40%) brightness(1.1);
-      mix-blend-mode: overlay;
     }
     
     .header {
@@ -140,12 +125,10 @@
       padding-right: 40px;
     }
     
-    /* Native select'i kapatacağız */
     #method {
       display: none;
     }
     
-    /* Custom dropdown */
     .custom-select {
       position: relative;
       width: 100%;
@@ -185,17 +168,8 @@
       border: 1px solid rgba(255,255,255,0.4);
       box-shadow: 0 20px 50px rgba(0,0,0,0.35);
       z-index: 9999;
-      
-      /* 🔥 Görsel artık çok daha belirgin */
-      background:
-        linear-gradient(
-          135deg,
-          rgba(255,255,255,0.72),
-          rgba(255,255,255,0.65)
-        ),
-        url('/static/images/şifre.png') center/cover no-repeat;
-      
-      backdrop-filter: blur(1px);
+      background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9));
+      backdrop-filter: blur(10px);
       padding: 10px;
       display: none;
     }
@@ -248,6 +222,39 @@
       padding: 16px;
       border-radius: 10px;
       border: 1px solid #e2e8f0;
+    }
+    
+    .key-generate-group {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    
+    .key-generate-group input {
+      flex: 1;
+    }
+    
+    .btn-generate-key {
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      justify-content: center;
+    }
+    
+    .btn-generate-key:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
     
     .actions {
@@ -372,6 +379,28 @@
       margin-bottom: 6px;
     }
     
+    .key-display {
+      background: #fffbeb;
+      border: 2px solid #fbbf24;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+      font-size: 12px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      word-break: break-all;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    
+    .key-display-title {
+      font-weight: 700;
+      color: #92400e;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
     @keyframes fadeInUp {
       from {
         opacity: 0;
@@ -413,6 +442,11 @@
       .actions {
         grid-template-columns: 1fr;
       }
+      
+      .key-generate-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
     }
     
     .loading {
@@ -438,7 +472,6 @@
 
   <div class="container">
     <div class="main-content">
-      <!-- Sidebar -->
       <div class="sidebar">
         <div class="section-title">
           <i class="fas fa-cog"></i>
@@ -455,9 +488,10 @@
         </div>
 
         <div id="params" class="params-grid"></div>
+        
+        <div id="key-display-container"></div>
       </div>
 
-      <!-- Content Area -->
       <div class="content-area">
         <div class="section-title">
           <i class="fas fa-keyboard"></i>
@@ -495,6 +529,7 @@
   </div>
 
 <script>
+// 1️⃣ PARAMS Güncellemesi
 const PARAMS = {
   caesar: [{key:"k",label:"Kaydırma Miktarı",type:"number",value:3}],
   vigenere: [{key:"key",label:"Anahtar Kelime",type:"text",value:"KEY"}],
@@ -522,7 +557,17 @@ const PARAMS = {
   polybius: [{key:"use_numbers",label:"Koordinat Tipi",type:"select",value:"true",options:[
     {value:"true",label:"Sayısal (11, 12...)"},
     {value:"false",label:"Harfli (AA, AB...)"}
-  ]}]
+  ]}],
+  playfair: [{key:"key",label:"Anahtar Kelime",type:"text",value:"MONARCHY"}],
+  aes_lib: [
+    { key:"key", label:"AES Anahtarı (16 karakter)", type:"text", value:"" }
+  ],
+  aes_manual: [
+    { key:"key", label:"AES Anahtarı (16 karakter)", type:"text", value:"" }
+  ],
+  des: [
+    { key:"key", label:"DES Anahtarı (8 karakter)", type:"text", value:"" }
+  ]
 };
 
 const ALGO_INFO = {
@@ -536,11 +581,55 @@ const ALGO_INFO = {
   columnar: {desc:"Sütunları anahtar kelimeye göre yeniden düzenler.",badges:["Transpozisyon","Anahtar Tabanlı"]},
   pigpen: {desc:"Harfleri özel semboller veya sayılarla temsil eder.",badges:["Görsel","Freemason"]},
   polybius: {desc:"Harfleri 5x5 ızgarada koordinatlarla gösterir.",badges:["Koordinat","Antik"]},
-  aes: {desc:"Gelişmiş Şifreleme Standardı - Modern simetrik şifreleme.",badges:["Modern","Simetrik","Güçlü"]},
-  des: {desc:"Veri Şifreleme Standardı - Eski simetrik şifreleme.",badges:["Modern","Simetrik"]},
-  rsa: {desc:"Açık anahtarlı asimetrik şifreleme algoritması.",badges:["Modern","Asimetrik","Açık Anahtar"]},
-  playfair: {desc:"5x5 matris kullanarak ikili harf gruplarını şifreler.",badges:["Klasik","Digraf"]}
+  playfair: {desc:"5x5 matris kullanarak ikili harf gruplarını şifreler.",badges:["Klasik","Digraf"]},
+  aes_lib: {desc:"Gelişmiş Şifreleme Standardı - Kütüphane ile güvenli şifreleme.",badges:["Modern","Simetrik","Güçlü","Kütüphane"]},
+  aes_manual: {desc:"Gelişmiş Şifreleme Standardı - Manuel implementasyon (eğitim amaçlı).",badges:["Modern","Simetrik","Eğitim"]},
+  des: {desc:"Veri Şifreleme Standardı - Eski simetrik şifreleme.",badges:["Modern","Simetrik"]}
 };
+
+function generateRandomKey(length) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// 3️⃣ RSA → AES / DES Anahtar Üretimi
+function generateKeyWithRSA(method){
+  showKeyDisplay("RSA", "RSA anahtarı üretiliyor...", true);
+
+  fetch('/api/generate-rsa-key', { method:'POST' })
+    .then(res => res.json())
+    .then(data => {
+      const keyLength = method === "des" ? 8 : 16;
+      const symKey = generateRandomKey(keyLength);
+
+      document.getElementById('p-key').value = symKey;
+
+      showKeyDisplay(
+        method.toUpperCase().replace('_', ' '),
+        `RSA Public Key:\n${data.public_key}\n\nÜretilen ${method.toUpperCase().replace('_', ' ')} Anahtarı:\n${symKey}`
+      );
+    })
+    .catch(err => {
+      showKeyDisplay("HATA", err.message);
+    });
+}
+
+function showKeyDisplay(type, key, loading = false) {
+  const container = document.getElementById('key-display-container');
+  container.innerHTML = `
+    <div class="key-display">
+      <div class="key-display-title">
+        <i class="fas fa-key"></i>
+        ${loading ? 'Üretiliyor...' : 'Üretilen ' + type + ' Anahtarı'}
+      </div>
+      <div style="color: #78350f;">${loading ? '<i class="fas fa-spinner fa-spin"></i> ' : ''}${key}</div>
+    </div>
+  `;
+}
 
 function copyToClipboard(){
   const output = document.getElementById('out').textContent;
@@ -553,11 +642,9 @@ function copyToClipboard(){
 }
 
 function buildCustomSelect(nativeSelect){
-  // wrapper
   const wrap = document.createElement('div');
   wrap.className = 'custom-select';
 
-  // button
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'custom-select__btn';
@@ -572,7 +659,6 @@ function buildCustomSelect(nativeSelect){
   btn.appendChild(label);
   btn.appendChild(caret);
 
-  // list
   const list = document.createElement('div');
   list.className = 'custom-select__list';
 
@@ -584,7 +670,6 @@ function buildCustomSelect(nativeSelect){
     label.textContent = nativeSelect.options[nativeSelect.selectedIndex]?.text || v;
   }
 
-  // items
   [...nativeSelect.options].forEach(opt => {
     const item = document.createElement('div');
     item.className = 'custom-select__item';
@@ -593,7 +678,7 @@ function buildCustomSelect(nativeSelect){
 
     item.addEventListener('click', () => {
       nativeSelect.value = opt.value;
-      nativeSelect.dispatchEvent(new Event('change')); // renderParams çalışsın
+      nativeSelect.dispatchEvent(new Event('change'));
       wrap.classList.remove('open');
       refreshActive();
     });
@@ -604,10 +689,8 @@ function buildCustomSelect(nativeSelect){
   wrap.appendChild(btn);
   wrap.appendChild(list);
 
-  // native select'in yerine koy
   nativeSelect.parentNode.insertBefore(wrap, nativeSelect.nextSibling);
 
-  // events
   btn.addEventListener('click', (e) => {
     e.preventDefault();
     wrap.classList.toggle('open');
@@ -625,19 +708,53 @@ async function loadAlgos(){
   const res = await fetch('/api/algorithms');
   const algos = await res.json();
   const sel = document.getElementById('method');
-  sel.innerHTML = algos.map(a=>`<option value="${a}">${a.toUpperCase()}</option>`).join('');
+  
+  // Algoritma isimlerini düzenle
+  const algorithmLabels = {
+    'aes': 'AES (Kütüphaneli)',
+    'aes_manual': 'AES (Kütüphanesiz)',
+    'des': 'DES',
+    'caesar': 'Caesar',
+    'vigenere': 'Vigenere',
+    'substitution': 'Substitution',
+    'affine': 'Affine',
+    'hill': 'Hill',
+    'railfence': 'Rail Fence',
+    'route': 'Route',
+    'columnar': 'Columnar',
+    'pigpen': 'Pigpen',
+    'polybius': 'Polybius',
+    'playfair': 'Playfair'
+  };
+  
+  // Backend'den gelen algoritmaları değiştir
+  const options = algos.map(a => {
+    let value = a;
+    let label = algorithmLabels[a] || a.toUpperCase();
+    
+    // Backend'den 'aes' gelirse, frontend'de 'aes_lib' olarak kullan
+    if (a === 'aes') {
+      value = 'aes_lib';
+    }
+    
+    return `<option value="${value}">${label}</option>`;
+  });
+  
+  sel.innerHTML = options.join('');
   sel.onchange = renderParams;
   renderParams();
   
-  buildCustomSelect(sel); // ✅ Custom dropdown oluştur
+  buildCustomSelect(sel);
 }
 
+// 2️⃣ RSA İLE ANAHTAR ÜRET BUTONU EKLE
 function renderParams(){
   const m = document.getElementById('method').value;
   const box = document.getElementById('params');
   const defs = PARAMS[m]||[];
   
-  // Algoritma bilgisini göster
+  document.getElementById('key-display-container').innerHTML = '';
+  
   const info = ALGO_INFO[m];
   if(info){
     document.getElementById('algorithm-info').style.display = 'block';
@@ -649,79 +766,90 @@ function renderParams(){
     document.getElementById('algorithm-info').style.display = 'none';
   }
   
-  box.innerHTML = defs.map(p=>{
-    if(p.type === 'select'){
+  // AES ve DES için basitleştirilmiş render
+  if (["aes_lib", "aes_manual", "des"].includes(m)) {
+    box.innerHTML = defs.map(p=>{
       return `
         <div class="param-group">
-          <label><i class="fas fa-sliders-h"></i> ${p.label}</label>
-          <select id="p-${p.key}">
-            ${p.options.map(opt=>
-              `<option value="${opt.value}" ${opt.value===p.value?'selected':''}>${opt.label}</option>`
-            ).join('')}
-          </select>
+          <label><i class="fas fa-key"></i> ${p.label}</label>
+          <input id="p-${p.key}" type="${p.type}" value="${p.value??''}" placeholder="Anahtar girin veya RSA ile üretin" />
         </div>`;
-    }
-    return `
-      <div class="param-group">
-        <label><i class="fas fa-key"></i> ${p.label}</label>
-        <input id="p-${p.key}" type="${p.type}" value="${p.value??''}" />
-      </div>`;
-  }).join('');
-}
-
-async function callApi(kind){
-  const method = document.getElementById('method').value;
-  const text = document.getElementById('text').value;
-  const outputBox = document.getElementById('out');
-  const copyBtn = document.getElementById('copyBtn');
-  
-  if(!text.trim()){
-    outputBox.className = 'output-box error';
-    outputBox.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Lütfen bir metin girin!';
-    copyBtn.style.display = 'none';
-    return;
-  }
-  
-  // Loading state
-  const btnText = kind === 'encrypt' ? 'Şifreleniyor...' : 'Çözülüyor...';
-  outputBox.className = 'output-box';
-  outputBox.innerHTML = `<div class="loading"></div> ${btnText}`;
-  copyBtn.style.display = 'none';
-  
-  const defs = PARAMS[method]||[];
-  const options = {};
-  defs.forEach(p => {
-    const val = document.getElementById('p-'+p.key)?.value;
-    // Boolean dönüşümü
-    if(val === 'true') options[p.key] = true;
-    else if(val === 'false') options[p.key] = false;
-    else options[p.key] = val;
-  });
-  
-  try {
-    const res = await fetch('/api/'+kind, {
-      method:'POST', 
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({method, text, options})
-    });
-    const js = await res.json();
+    }).join('');
     
-    if(js.result){
-      outputBox.className = 'output-box success';
-      outputBox.textContent = js.result;
-      copyBtn.style.display = 'block';
-    } else {
-      outputBox.className = 'output-box error';
-      outputBox.innerHTML = `<i class="fas fa-times-circle"></i> ${js.error || 'Bir hata oluştu'}`;
-      copyBtn.style.display = 'none';
-    }
-  } catch(err){
-    outputBox.className = 'output-box error';
-    outputBox.innerHTML = `<i class="fas fa-exclamation-circle"></i> Bağlantı hatası: ${err.message}`;
+    // RSA ile anahtar üret butonu ekle
+    box.innerHTML += `
+      <div class="param-group">
+        <button class="btn-generate-key" onclick="generateKeyWithRSA('${m}')">
+          <i class="fas fa-key"></i> RSA ile Anahtar Üret
+        </button>
+      </div>
+    `;
+  } else {
+    // Diğer algoritmalar için normal render
+    box.innerHTML = defs.map(p=>{
+      if(p.type === 'select'){
+        return `
+          <div class="param-group">
+            <label><i class="fas fa-sliders-h"></i> ${p.label}</label>
+            <select id="p-${p.key}">
+              ${p.options.map(opt=>
+                `<option value="${opt.value}" ${opt.value===p.value?'selected':''}>${opt.label}</option>`
+              ).join('')}
+            </select>
+          </div>`;
+      }
+      return `
+        <div class="param-group">
+          <label><i class="fas fa-${p.type==='number'?'hashtag':'key'}"></i> ${p.label}</label>
+          <input id="p-${p.key}" type="${p.type}" value="${p.value??''}" placeholder="${p.label}" />
+        </div>`;
+    }).join('');
+  }
+}
+
+// 4️⃣ Şifreleme / Deşifreleme
+async function callApi(type){
+  let method = document.getElementById('method').value;
+  const text = document.getElementById('text').value;
+
+  const opts = {};
+  (PARAMS[method]||[]).forEach(p=>{
+    const el = document.getElementById('p-'+p.key);
+    if(el) opts[p.key] = el.value;
+  });
+
+  // aes_lib / aes_manual backend uyarlaması
+  if(method === "aes_lib"){
+    opts.use_library = true;
+    method = "aes";
+  }
+  if(method === "aes_manual"){
+    opts.use_library = false;
+    method = "aes";
+  }
+
+  const res = await fetch('/api/' + type, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ method, text, options:opts })
+  });
+
+  const data = await res.json();
+  const out = document.getElementById('out');
+  const copyBtn = document.getElementById('copyBtn');
+
+  if(data.result){
+    out.textContent = data.result;
+    out.className = 'output-box success';
+    copyBtn.style.display = 'block';
+  } else {
+    out.textContent = data.error || 'Bir hata oluştu';
+    out.className = 'output-box error';
     copyBtn.style.display = 'none';
   }
 }
 
+// Sayfa yüklendiğinde çalıştır
 loadAlgos();
 </script>
 </body>

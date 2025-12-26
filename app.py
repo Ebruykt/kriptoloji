@@ -5,20 +5,23 @@ from crypto.substitution import Substitution
 from crypto.affine import Affine
 from crypto.playfair import Playfair
 from crypto.aes import AES
-from crypto.des import DES_Cipher
-from crypto.rsa import RSA_Cipher
 from crypto.route import RouteCipher
 from crypto.columnar import ColumnarCipher
 from crypto.pigpen import PigpenCipher
 from crypto.polybius import PolybiusCipher
 
-# Yeni eklemeler: hill ve railfence wrapper'ları import edildi
+# Modülleri direkt import et
 import crypto.hill as hill_mod
 import crypto.railfence as rf_mod
+import base64
+import crypto.aes as aes_lib
+import crypto.aes_manual as aes_manual
+import crypto.des as des_lib
+import crypto.rsa as rsa_lib
+
 
 app = Flask(__name__, static_folder="static")
 
-# Küçük wrapper sınıfları — REGISTRY ile uyumlu olacak şekilde
 class Hill:
     name = "hill"
     def encrypt(self, text, key=None, **kwargs):
@@ -38,22 +41,147 @@ class RailFence:
     def decrypt(self, text, rails=2, **kwargs):
         rails = int(rails) if rails is not None and str(rails) != "" else 2
         return rf_mod.decrypt(text, rails)
+    
+# ✅ AES Kütüphaneli (aes_lib olarak değiştirildi)
+class AESLibWrapper:
+    name = "aes_lib"
 
-# Haftalar ilerledikçe buraya yeni algoritma nesneleri eklenecek
+    def encrypt(self, text, key=None, **kwargs):
+        if not key:
+            raise ValueError("AES için key zorunludur")
+
+        if isinstance(key, str):
+            key = key.encode()
+        
+        if len(key) not in [16, 24, 32]:
+            if len(key) < 16:
+                key = key + b'0' * (16 - len(key))
+            else:
+                key = key[:16]
+
+        return aes_lib.encrypt(text, key)
+
+    def decrypt(self, text, key=None, **kwargs):
+        if not key:
+            raise ValueError("AES için key zorunludur")
+
+        if isinstance(key, str):
+            key = key.encode()
+        
+        if len(key) not in [16, 24, 32]:
+            if len(key) < 16:
+                key = key + b'0' * (16 - len(key))
+            else:
+                key = key[:16]
+
+        return aes_lib.decrypt(text, key)
+
+# ✅ AES Kütüphanesiz (aes_manual olarak ayrı)
+class AESManualWrapper:
+    name = "aes_manual"
+
+    def encrypt(self, text, key=None, **kwargs):
+        if not key:
+            raise ValueError("AES için key zorunludur")
+
+        if isinstance(key, str):
+            key = key.encode()
+        
+        if len(key) not in [16, 24, 32]:
+            if len(key) < 16:
+                key = key + b'0' * (16 - len(key))
+            else:
+                key = key[:16]
+
+        encrypted = aes_manual.encrypt(text, key)
+        return base64.b64encode(encrypted).decode()
+
+    def decrypt(self, text, key=None, **kwargs):
+        if not key:
+            raise ValueError("AES için key zorunludur")
+
+        if isinstance(key, str):
+            key = key.encode()
+        
+        if len(key) not in [16, 24, 32]:
+            if len(key) < 16:
+                key = key + b'0' * (16 - len(key))
+            else:
+                key = key[:16]
+
+        raw = base64.b64decode(text)
+        return aes_manual.decrypt(raw, key)
+
+        
+class DESWrapper:
+    name = "des"
+
+    def encrypt(self, text, key=None, **kwargs):
+        if not key:
+            raise ValueError("DES için key zorunludur")
+
+        if isinstance(key, str):
+            key = key.encode()
+        
+        if len(key) != 8:
+            if len(key) < 8:
+                key = key + b'0' * (8 - len(key))
+            else:
+                key = key[:8]
+
+        return des_lib.encrypt(text, key)
+
+    def decrypt(self, text, key=None, **kwargs):
+        if not key:
+            raise ValueError("DES için key zorunludur")
+
+        if isinstance(key, str):
+            key = key.encode()
+        
+        if len(key) != 8:
+            if len(key) < 8:
+                key = key + b'0' * (8 - len(key))
+            else:
+                key = key[:8]
+
+        return des_lib.decrypt(text, key)
+
+
+class RSAWrapper:
+    name = "rsa"
+
+    def __init__(self):
+        self.private_key = None
+        self.public_key = None
+
+    def generate_keys(self):
+        self.private_key, self.public_key = rsa_lib.generate_keypair()
+        return {
+            "private_key": self.private_key.decode(),
+            "public_key": self.public_key.decode()
+        }
+
+    def encrypt(self, text, **kwargs):
+        raise ValueError("RSA doğrudan mesaj şifrelemek için kullanılmaz")
+
+    def decrypt(self, text, **kwargs):
+        raise ValueError("RSA doğrudan mesaj çözmek için kullanılmaz")
+
+
+rsa_instance = RSAWrapper()
+
+# ✅ REGISTRY'ye her iki AES sürümü eklendi
 REGISTRY = {
     Caesar.name: Caesar(),
     Vigenere.name: Vigenere(),
     Substitution.name: Substitution(),
     Affine.name: Affine(),
     Playfair.name: Playfair(),
-    # Modern şifreleme algoritmaları
-    AES.name: AES(),
-    DES_Cipher.name: DES_Cipher(),
-    RSA_Cipher.name: RSA_Cipher(),
-    # Yeni eklemeler
+    AESLibWrapper.name: AESLibWrapper(),        # ← aes_lib
+    AESManualWrapper.name: AESManualWrapper(),  # ← aes_manual
+    DESWrapper.name: DESWrapper(),
     Hill.name: Hill(),
     RailFence.name: RailFence(),
-    # Yeni transpozisyon ve görsel şifreler
     RouteCipher.name: RouteCipher(),
     ColumnarCipher.name: ColumnarCipher(),
     PigpenCipher.name: PigpenCipher(),
@@ -63,6 +191,14 @@ REGISTRY = {
 @app.get("/api/algorithms")
 def algorithms():
     return jsonify(sorted(REGISTRY.keys()))
+
+@app.post("/api/generate-rsa-key")
+def generate_rsa_key():
+    try:
+        keys = rsa_instance.generate_keys()
+        return jsonify(keys)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 @app.post("/api/encrypt")
 def encrypt():
