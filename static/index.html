@@ -529,7 +529,7 @@
   </div>
 
 <script>
-// 1️⃣ PARAMS Güncellemesi
+// PARAMS Güncellemesi
 const PARAMS = {
   caesar: [{key:"k",label:"Kaydırma Miktarı",type:"number",value:3}],
   vigenere: [{key:"key",label:"Anahtar Kelime",type:"text",value:"KEY"}],
@@ -596,7 +596,7 @@ function generateRandomKey(length) {
   return result;
 }
 
-// 3️⃣ RSA → AES / DES Anahtar Üretimi
+// RSA ile Anahtar Üretimi
 function generateKeyWithRSA(method){
   showKeyDisplay("RSA", "RSA anahtarı üretiliyor...", true);
 
@@ -747,7 +747,7 @@ async function loadAlgos(){
   buildCustomSelect(sel);
 }
 
-// 2️⃣ RSA İLE ANAHTAR ÜRET BUTONU EKLE
+// RSA ile Anahtar Üret Butonu Ekle
 function renderParams(){
   const m = document.getElementById('method').value;
   const box = document.getElementById('params');
@@ -777,6 +777,7 @@ function renderParams(){
     }).join('');
     
     // RSA ile anahtar üret butonu ekle
+   // RSA ile anahtar üret butonu ekle
     box.innerHTML += `
       <div class="param-group">
         <button class="btn-generate-key" onclick="generateKeyWithRSA('${m}')">
@@ -807,9 +808,8 @@ function renderParams(){
   }
 }
 
-// 4️⃣ Şifreleme / Deşifreleme
 async function callApi(type){
-  let method = document.getElementById('method').value;
+  const method = document.getElementById('method').value;
   const text = document.getElementById('text').value;
 
   const opts = {};
@@ -818,23 +818,18 @@ async function callApi(type){
     if(el) opts[p.key] = el.value;
   });
 
-  // aes_lib / aes_manual backend uyarlaması
-  if(method === "aes_lib"){
-    opts.use_library = true;
-    method = "aes";
-  }
-  if(method === "aes_manual"){
-    opts.use_library = false;
-    method = "aes";
-  }
-
   const res = await fetch('/api/' + type, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ method, text, options:opts })
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      method: method,
+      text: text,
+      options: opts
+    })
   });
 
   const data = await res.json();
+
   const out = document.getElementById('out');
   const copyBtn = document.getElementById('copyBtn');
 
@@ -848,6 +843,10 @@ async function callApi(type){
     copyBtn.style.display = 'none';
   }
 }
+
+
+
+
 
 // Sayfa yüklendiğinde çalıştır
 loadAlgos();
