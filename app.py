@@ -18,6 +18,7 @@ import crypto.aes as aes_lib
 import crypto.aes_manual as aes_manual
 import crypto.des as des_lib
 import crypto.rsa as rsa_lib
+import crypto.ecc as ecc_lib
 
 
 app = Flask(__name__, static_folder="static")
@@ -169,6 +170,31 @@ class RSAWrapper:
 
 
 rsa_instance = RSAWrapper()
+
+class ECCWrapper:
+    name = "ecc"
+
+    def __init__(self):
+        self.private_key = None
+        self.public_key = None
+
+    def generate_keys(self):
+        self.private_key, self.public_key = ecc_lib.generate_keypair()
+        return {
+            "private_key": self.private_key.decode(),
+            "public_key": self.public_key.decode()
+        }
+
+    def generate_aes_key(self):
+        key = ecc_lib.derive_aes_key()
+        return key.hex()
+
+    def encrypt(self, text, **kwargs):
+        raise ValueError("ECC doğrudan mesaj şifrelemek için kullanılmaz")
+
+    def decrypt(self, text, **kwargs):
+        raise ValueError("ECC doğrudan mesaj çözmek için kullanılmaz")
+
 
 # ✅ REGISTRY'ye her iki AES sürümü eklendi
 REGISTRY = {

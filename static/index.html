@@ -13,16 +13,27 @@
       padding: 0;
     }
     
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: 
-        linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%),
-        #667eea;
-      min-height: 100vh;
-      padding: 20px;
-      color: #1e293b;
-      position: relative;
-    }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(102, 126, 234, 0.75),
+      rgba(118, 75, 162, 0.75)
+    ),
+    url("static/images/alan-turing-2-620x350.jpg");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+
+  min-height: 100vh;
+  padding: 20px;
+  color: #1e293b;
+}
+
     
     .header {
       text-align: center;
@@ -296,6 +307,16 @@
     .btn-decrypt {
       background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     }
+
+    .btn-download {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.btn-download:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
     
     .output-section {
       margin-top: 24px;
@@ -462,6 +483,52 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    .input-row {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 20px;
+}
+
+.file-box {
+  width: 260px;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.file-box label {
+  font-weight: 600;
+  color: #475569;
+}
+
+.file-box small {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.input-row textarea {
+  flex: 1;
+  min-height: 160px;
+}
+
+/* MOBİLDE ALT ALTA DÜŞSÜN */
+@media (max-width: 768px) {
+  .input-row {
+    flex-direction: column;
+  }
+
+  .file-box {
+    width: 100%;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -494,11 +561,27 @@
 
       <div class="content-area">
         <div class="section-title">
-          <i class="fas fa-keyboard"></i>
-          Metin Girişi
-        </div>
-        
-        <textarea id="text" placeholder="Şifrelenecek veya çözülecek metninizi buraya yazın..."></textarea>
+  <i class="fas fa-keyboard"></i>
+  Metin Girişi
+</div>
+
+<div class="input-row">
+  <!-- DOSYA YÜKLE -->
+  <div class="file-box">
+    <label for="fileInput">
+      <i class="fas fa-file-alt"></i> Dosyadan Metin Yükle (.txt)
+    </label>
+    <input type="file" id="fileInput" accept=".txt" onchange="readFile()" />
+    <small>Dosya içeriği otomatik metin alanına aktarılır</small>
+  </div>
+
+  <!-- METİN GİRİŞİ -->
+  <textarea
+    id="text"
+    placeholder="Şifrelenecek veya çözülecek metninizi buraya yazın..."
+  ></textarea>
+</div>
+
 
         <div class="actions">
           <button class="btn btn-encrypt" onclick="callApi('encrypt')">
@@ -512,21 +595,25 @@
         </div>
 
         <div class="output-section">
-          <div class="section-title">
-            <i class="fas fa-lock"></i>
-            <i class="fas fa-unlock"></i>
-            Sonuç
-          </div>
-          <div class="output-box" id="out">
-            <button class="copy-btn" onclick="copyToClipboard()" style="display:none;" id="copyBtn">
-              <i class="fas fa-copy"></i> Kopyala
-            </button>
-            <span style="color:#94a3b8;">Sonuç burada görünecek...</span>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="section-title">
+    <i class="fas fa-lock"></i>
+    <i class="fas fa-unlock"></i>
+    Sonuç
   </div>
+
+  <div class="output-box" id="out">
+    <button class="copy-btn" onclick="copyToClipboard()" style="display:none;" id="copyBtn">
+      <i class="fas fa-copy"></i> Kopyala
+    </button>
+    <span style="color:#94a3b8;">Sonuç burada görünecek...</span>
+  </div>
+
+  <!-- 🔽 SONUCU DOSYA OLARAK İNDİR BUTONU -->
+<button class="btn btn-download" onclick="downloadResult()" style="margin-top:12px;">
+    <i class="fas fa-download"></i> Sonucu Dosya Olarak İndir
+  </button>
+</div>
+
 
 <script>
 // PARAMS Güncellemesi
@@ -567,7 +654,10 @@ const PARAMS = {
   ],
   des: [
     { key:"key", label:"DES Anahtarı (8 karakter)", type:"text", value:"" }
-  ]
+  ],
+   ecc: []
+
+
 };
 
 const ALGO_INFO = {
@@ -583,8 +673,11 @@ const ALGO_INFO = {
   polybius: {desc:"Harfleri 5x5 ızgarada koordinatlarla gösterir.",badges:["Koordinat","Antik"]},
   playfair: {desc:"5x5 matris kullanarak ikili harf gruplarını şifreler.",badges:["Klasik","Digraf"]},
   aes_lib: {desc:"Gelişmiş Şifreleme Standardı - Kütüphane ile güvenli şifreleme.",badges:["Modern","Simetrik","Güçlü","Kütüphane"]},
-  aes_manual: {desc:"Gelişmiş Şifreleme Standardı - Manuel implementasyon (eğitim amaçlı).",badges:["Modern","Simetrik","Eğitim"]},
-  des: {desc:"Veri Şifreleme Standardı - Eski simetrik şifreleme.",badges:["Modern","Simetrik"]}
+  aes_manual: {desc:"Gelişmiş Şifreleme Standardı - Manuel.",badges:["Modern","Simetrik","Eğitim"]},
+  des: {desc:"Veri Şifreleme Standardı - Eski simetrik şifreleme.",badges:["Modern","Simetrik"]},
+  ecc: {
+  desc:"Elliptic Curve Cryptography — anahtar üretimi ve anahtar değişimi için kullanılır.",
+  badges:["Modern","Asimetrik","Anahtar Değişimi"]}
 };
 
 function generateRandomKey(length) {
@@ -617,6 +710,22 @@ function generateKeyWithRSA(method){
       showKeyDisplay("HATA", err.message);
     });
 }
+function generateECCKey(){
+  showKeyDisplay("ECC", "ECC anahtarı üretiliyor...", true);
+
+  fetch('/api/generate-ecc-key', { method:'POST' })
+    .then(res => res.json())
+    .then(data => {
+      showKeyDisplay(
+        "ECC",
+        `Private Key:\n${data.private_key}\n\nPublic Key:\n${data.public_key}`
+      );
+    })
+    .catch(err => {
+      showKeyDisplay("HATA", err.message);
+    });
+}
+
 
 function showKeyDisplay(type, key, loading = false) {
   const container = document.getElementById('key-display-container');
@@ -724,7 +833,9 @@ async function loadAlgos(){
     'columnar': 'Columnar',
     'pigpen': 'Pigpen',
     'polybius': 'Polybius',
-    'playfair': 'Playfair'
+    'playfair': 'Playfair',
+    'ecc': 'ECC (Anahtar Üretimi)'
+
   };
   
   // Backend'den gelen algoritmaları değiştir
@@ -732,11 +843,7 @@ async function loadAlgos(){
     let value = a;
     let label = algorithmLabels[a] || a.toUpperCase();
     
-    // Backend'den 'aes' gelirse, frontend'de 'aes_lib' olarak kullan
-    if (a === 'aes') {
-      value = 'aes_lib';
-    }
-    
+   
     return `<option value="${value}">${label}</option>`;
   });
   
@@ -751,33 +858,48 @@ async function loadAlgos(){
 function renderParams(){
   const m = document.getElementById('method').value;
   const box = document.getElementById('params');
-  const defs = PARAMS[m]||[];
-  
+  const defs = PARAMS[m] || [];
+
   document.getElementById('key-display-container').innerHTML = '';
-  
+
   const info = ALGO_INFO[m];
   if(info){
     document.getElementById('algorithm-info').style.display = 'block';
     document.getElementById('algo-description').textContent = info.desc;
-    document.getElementById('algo-badges').innerHTML = info.badges.map(b=>
+    document.getElementById('algo-badges').innerHTML = info.badges.map(b =>
       `<span class="badge">${b}</span>`
     ).join('');
   } else {
     document.getElementById('algorithm-info').style.display = 'none';
   }
-  
-  // AES ve DES için basitleştirilmiş render
-  if (["aes_lib", "aes_manual", "des"].includes(m)) {
-    box.innerHTML = defs.map(p=>{
+
+  // 🔵 1️⃣ ECC
+  if (m === "ecc") {
+    box.innerHTML = `
+      <div class="param-group">
+        <button class="btn-generate-key" onclick="generateECCKey()">
+          <i class="fas fa-project-diagram"></i> ECC ile Anahtar Üret
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  // 🔵 2️⃣ AES ve DES
+  else if (["aes_lib", "des"].includes(m)) {
+    box.innerHTML = defs.map(p => {
       return `
         <div class="param-group">
           <label><i class="fas fa-key"></i> ${p.label}</label>
-          <input id="p-${p.key}" type="${p.type}" value="${p.value??''}" placeholder="Anahtar girin veya RSA ile üretin" />
+          <input
+            id="p-${p.key}"
+            type="${p.type}"
+            value="${p.value ?? ''}"
+            placeholder="Anahtar girin veya RSA ile üretin"
+          />
         </div>`;
     }).join('');
-    
-    // RSA ile anahtar üret butonu ekle
-   // RSA ile anahtar üret butonu ekle
+
     box.innerHTML += `
       <div class="param-group">
         <button class="btn-generate-key" onclick="generateKeyWithRSA('${m}')">
@@ -785,28 +907,40 @@ function renderParams(){
         </button>
       </div>
     `;
-  } else {
-    // Diğer algoritmalar için normal render
-    box.innerHTML = defs.map(p=>{
+    return;
+  }
+
+  // 🔵 3️⃣ DİĞER TÜM ALGORİTMALAR
+  else {
+    box.innerHTML = defs.map(p => {
       if(p.type === 'select'){
         return `
           <div class="param-group">
             <label><i class="fas fa-sliders-h"></i> ${p.label}</label>
             <select id="p-${p.key}">
-              ${p.options.map(opt=>
-                `<option value="${opt.value}" ${opt.value===p.value?'selected':''}>${opt.label}</option>`
+              ${p.options.map(opt =>
+                `<option value="${opt.value}" ${opt.value === p.value ? 'selected' : ''}>
+                  ${opt.label}
+                </option>`
               ).join('')}
             </select>
           </div>`;
       }
+
       return `
         <div class="param-group">
-          <label><i class="fas fa-${p.type==='number'?'hashtag':'key'}"></i> ${p.label}</label>
-          <input id="p-${p.key}" type="${p.type}" value="${p.value??''}" placeholder="${p.label}" />
+          <label><i class="fas fa-${p.type === 'number' ? 'hashtag' : 'key'}"></i> ${p.label}</label>
+          <input
+            id="p-${p.key}"
+            type="${p.type}"
+            value="${p.value ?? ''}"
+            placeholder="${p.label}"
+          />
         </div>`;
     }).join('');
   }
 }
+
 
 async function callApi(type){
   const method = document.getElementById('method').value;
@@ -844,7 +978,43 @@ async function callApi(type){
   }
 }
 
+function readFile() {
+  const fileInput = document.getElementById('fileInput');
+  const file = fileInput.files[0];
 
+  if (!file) return;
+
+  if (!file.name.endsWith('.txt')) {
+    alert("Lütfen sadece .txt dosyası yükleyin");
+    fileInput.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    document.getElementById('text').value = e.target.result;
+  };
+
+  reader.readAsText(file, "UTF-8");
+}
+
+
+function downloadResult() {
+  const output = document.getElementById('out').textContent;
+
+  if (!output || output.includes("Sonuç burada görünecek")) {
+    alert("İndirilecek bir sonuç yok.");
+    return;
+  }
+
+  const blob = new Blob([output], { type: "text/plain;charset=utf-8" });
+  const link = document.createElement("a");
+
+  link.href = URL.createObjectURL(blob);
+  link.download = "sonuc.txt";
+  link.click();
+}
 
 
 
